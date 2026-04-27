@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neem Leaf Disease Detection | CNN</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-glow: #00ffff; /* Cyan */
+            --secondary-glow: #ff00ff; /* Magenta */
+            --background-dark: #0a0a14;
+            --surface-dark: #1a1a2e;
+            --text-light: #e0e0e0;
+            --text-dark: #1a1a2e;
+            --shadow: 0 0 15px var(--primary-glow), 0 0 30px var(--primary-glow);
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 5px var(--primary-glow), 0 0 10px var(--primary-glow); }
+            50% { box-shadow: 0 0 20px var(--primary-glow), 0 0 30px var(--primary-glow); }
+            100% { box-shadow: 0 0 5px var(--primary-glow), 0 0 10px var(--primary-glow); }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            color: var(--text-light);
+            background-color: var(--background-dark);
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(0, 255, 255, 0.1), transparent 40%),
+                radial-gradient(circle at 75% 75%, rgba(255, 0, 255, 0.1), transparent 40%);
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box; 
+            overflow-y: auto; 
+        }
+
+        .container {
+            background: rgba(26, 26, 46, 0.8);
+            padding: 30px 40px;
+            border-radius: 16px;
+            box-shadow: 0 0 25px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            max-width: 900px;
+            text-align: center;
+            border: 1px solid var(--primary-glow);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease;
+            animation: fadeIn 1s ease-out;
+        }
+        
+        .container:hover {
+            transform: translateY(-10px);
+            box-shadow: var(--shadow);
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--primary-glow);
+            margin-bottom: 15px;
+            font-weight: 700;
+            text-shadow: 0 0 5px var(--primary-glow);
+        }
+
+        p {
+            color: var(--text-light);
+            margin-bottom: 20px;
+            font-weight: 300;
+        }
+
+        .upload-form {
+            margin-bottom: 30px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-label, .cam-btn {
+            background-color: transparent;
+            color: var(--primary-glow);
+            border: 2px solid var(--primary-glow);
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+            display: inline-block;
+            margin: 5px;
+        }
+
+        .file-label:hover, .cam-btn:hover {
+            background-color: var(--primary-glow);
+            color: var(--surface-dark);
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        .submit-btn {
+            background: linear-gradient(45deg, var(--primary-glow), var(--secondary-glow));
+            color: var(--text-dark);
+            padding: 14px 35px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 700;
+            font-family: 'Orbitron', sans-serif;
+            margin-top: 15px;
+            transition: transform 0.2s ease, box-shadow 0.3s ease;
+            text-transform: uppercase;
+        }
+
+        .submit-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px var(--secondary-glow);
+        }
+
+        /* Video Feed Styles */
+        #video-container {
+            display: none;
+            margin-top: 20px;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        #camera-feed {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 12px;
+            border: 3px solid var(--primary-glow);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+            background-color: #000;
+        }
+
+        /* Result Layout Styles */
+        .result-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 30px;
+            margin-top: 30px;
+            padding: 25px;
+            border-radius: 12px;
+            background-color: rgba(10, 10, 20, 0.7);
+            border: 1px solid var(--secondary-glow);
+            animation: fadeIn 0.5s ease-in-out;
+            text-align: left;
+        }
+
+        .result-text { flex: 1; }
+        .result-image-display { flex-basis: 45%; text-align: center; }
+        
+        .result-wrapper h2 {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--secondary-glow);
+            margin-top: 0;
+            font-weight: 600;
+            text-shadow: 0 0 5px var(--secondary-glow);
+        }
+
+        .result-wrapper p { font-size: 1.1em; margin: 10px 0; }
+        .result-wrapper p strong { color: var(--primary-glow); }
+
+        #prediction-value {
+             font-size: 1.3em;
+             color: var(--text-light);
+             font-weight: 700;
+        }
+
+        .result-image {
+            width: 100%;
+            height: auto;
+            border-radius: 12px;
+            border: 3px solid var(--secondary-glow);
+        }
+
+        .file-name {
+            margin-top: 15px;
+            font-style: italic;
+            color: var(--primary-glow);
+            height: 20px;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🌿 Neem Disease Analysis</h1>
+        <p>Upload a leaf image or scan live for biotic diagnostics.</p>
+
+        <div>
+            <button type="button" class="cam-btn" id="start-cam-btn">📷 Open Camera</button>
+            <button type="button" class="cam-btn" id="stop-cam-btn" style="display: none;">🛑 Close Camera</button>
+        </div>
+
+        <div id="video-container">
+            <video id="camera-feed" autoplay playsinline></video>
+            <br>
+            <button type="button" class="submit-btn" id="capture-btn" style="margin-top: 10px;">Capture Frame</button>
+        </div>
+
+        <canvas id="canvas" style="display: none;"></canvas>
+
+        <p style="margin: 20px 0; font-weight: bold;">— OR —</p>
+
+        <form class="upload-form" method="post" enctype="multipart/form-data" id="analysis-form">
+            <label for="file" class="file-label">📁 Select File</label>
+            <input type="file" name="file" id="file" class="file-input" onchange="displayFileName()" accept="image/*">
+            <div id="file-name-display" class="file-name"></div>
+            <br>
+            <button type="submit" class="submit-btn">Analyze Data</button>
+        </form>
+
+        {% if prediction %}
+        <div class="result-wrapper">
+            <div class="result-text">
+                <h2>Analysis Complete</h2>
+                <p><strong>Detected Condition:</strong> <span id="prediction-value">{{ prediction }}</span></p>
+                <p><strong>Confidence Level:</strong> {{ confidence }}</p>
+                
+                {% if gemini_response %}
+                <hr style="border-color: var(--primary-glow); margin: 15px 0;">
+                <h4 style="color: var(--primary-glow); font-family: 'Orbitron', sans-serif;">Industry Insights:</h4>
+                <p>{{ gemini_response|safe }}</p>
+                {% endif %}
+            </div>
+            
+            <div class="result-image-display">
+                {% if uploaded_image %}
+                    <img src="{{ url_for('send_uploaded_file', filename=uploaded_image) }}" alt="Uploaded Image" class="result-image">
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        const video = document.getElementById('camera-feed');
+        const canvas = document.getElementById('canvas');
+        const videoContainer = document.getElementById('video-container');
+        const startCamBtn = document.getElementById('start-cam-btn');
+        const stopCamBtn = document.getElementById('stop-cam-btn');
+        const captureBtn = document.getElementById('capture-btn');
+        const fileInput = document.getElementById('file');
+        const fileDisplay = document.getElementById('file-name-display');
+        let stream = null;
+
+        // Display selected file name
+        function displayFileName() {
+            if (fileInput.files.length > 0) {
+                fileDisplay.textContent = `Target locked: ${fileInput.files[0].name}`;
+            } else {
+                fileDisplay.textContent = '';
+            }
+        }
+
+        // Start Camera
+        startCamBtn.addEventListener('click', async () => {
+            try {
+                // facingMode: 'environment' prioritizes the rear camera on mobile devices.
+                // On PC, it will default to the standard webcam.
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment' } 
+                });
+                video.srcObject = stream;
+                videoContainer.style.display = 'block';
+                startCamBtn.style.display = 'none';
+                stopCamBtn.style.display = 'inline-block';
+            } catch (err) {
+                alert("Camera access denied or not available. Error: " + err.message);
+            }
+        });
+
+        // Stop Camera
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                videoContainer.style.display = 'none';
+                startCamBtn.style.display = 'inline-block';
+                stopCamBtn.style.display = 'none';
+            }
+        }
+
+        stopCamBtn.addEventListener('click', stopCamera);
+
+        // Capture Frame and inject it into the file input
+        captureBtn.addEventListener('click', () => {
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Convert the canvas image to a JPEG Blob
+            canvas.toBlob((blob) => {
+                // Create a new File object
+                const file = new File([blob], "live_capture.jpg", { type: "image/jpeg" });
+
+                // Use DataTransfer object to assign the file to the HTML file input
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                fileInput.files = dataTransfer.files;
+
+                displayFileName();
+                stopCamera();
+                
+                // Optional: Automatically submit the form right after capturing
+                // document.getElementById('analysis-form').submit();
+                
+            }, 'image/jpeg', 0.9); // 0.9 is the image quality
+        });
+    </script>
+
+</body>
+</html>
